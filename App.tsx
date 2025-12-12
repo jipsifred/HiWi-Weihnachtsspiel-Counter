@@ -125,12 +125,9 @@ const App: React.FC = () => {
         if (e.code === 'Digit8') setScores(prev => ({ ...prev, 4: Math.max(0, (prev[4] || 0) - 1) }));
         
         // Adjust Max Score (Shift + +/-)
-        // Note: On many keyboards '+' is Shift+'=', so e.key === '+' covers it. 
-        // e.code 'Equal' covers standard layout +. 'NumpadAdd' covers numpad.
         if (e.key === '+' || e.code === 'Equal' || e.code === 'NumpadAdd' || e.code === 'BracketRight') {
            setMaxScore(prev => Math.min(1000, prev + 10));
         }
-        // Note: Shift + '-' often produces '_', so we check for '_' or e.code 'Minus'.
         if (e.key === '-' || e.key === '_' || e.code === 'Minus' || e.code === 'NumpadSubtract' || e.code === 'Slash') {
            setMaxScore(prev => Math.max(10, prev - 10));
         }
@@ -153,7 +150,6 @@ const App: React.FC = () => {
     }));
   };
   
-  // Right click to decrease score
   const handleScoreContextMenu = (e: React.MouseEvent, id: number) => {
     e.preventDefault();
     if (viewMode === 'setup') return;
@@ -190,7 +186,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-neutral-900 flex flex-col items-center justify-center p-4">
+    // Main Container: Flex center allows the child to scale nicely.
+    <div className="w-screen h-screen bg-neutral-900 flex items-center justify-center overflow-hidden relative">
       {showWinnerAnimation && <Confetti />}
 
       {/* --- SETUP UI / INSTRUCTIONS --- */}
@@ -261,7 +258,6 @@ const App: React.FC = () => {
 
           {/* KEYBOARD SHORTCUTS GRID */}
           <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pointer-events-auto">
-              
               {/* Adding Points */}
               <div className="bg-white/5 p-4 rounded-lg border border-white/5">
                   <div className="flex items-center space-x-2 mb-3 text-green-400">
@@ -287,7 +283,6 @@ const App: React.FC = () => {
                       </div>
                   </div>
               </div>
-
               {/* Removing Points */}
               <div className="bg-white/5 p-4 rounded-lg border border-white/5">
                   <div className="flex items-center space-x-2 mb-3 text-red-400">
@@ -313,7 +308,6 @@ const App: React.FC = () => {
                       </div>
                   </div>
               </div>
-
               {/* Special Controls */}
               <div className="bg-white/5 p-4 rounded-lg border border-white/5">
                   <div className="flex items-center space-x-2 mb-3 text-amber-400">
@@ -343,14 +337,23 @@ const App: React.FC = () => {
                       </div>
                   </div>
               </div>
-
           </div>
         </div>
       )}
 
       {/* --- THE STAGE --- */}
+      {/* 
+         Changed: Enhanced sizing logic.
+         'w-auto h-auto max-w-full max-h-full aspect-video' ensures it scales up until it hits a border, 
+         maintaining 16:9 perfectly without overflow or crop.
+      */}
       <div 
-        className={`relative w-full aspect-video max-h-screen border border-white/10 shadow-2xl overflow-hidden bg-black rounded-lg select-none transition-all duration-700 ease-in-out ${viewMode === 'setup' ? 'mt-[350px] scale-75 opacity-90' : 'scale-100'}`}
+        className={`relative shadow-2xl overflow-hidden bg-black rounded-lg select-none transition-all duration-700 ease-in-out border border-white/10 aspect-video
+          ${viewMode === 'setup' 
+            ? 'w-[80%] max-w-6xl mt-[30vh] opacity-90' // Setup: smaller, pushed down
+            : 'w-auto h-auto max-w-full max-h-full aspect-video' // Presentation: Scale to fit viewport perfectly
+          }
+        `}
         style={{
           boxShadow: viewMode === 'presentation' ? "0 0 100px rgba(0,0,0,1)" : "0 0 50px rgba(0,0,0,0.8)"
         }}
