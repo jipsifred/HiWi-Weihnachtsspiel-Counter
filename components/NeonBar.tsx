@@ -10,9 +10,6 @@ interface NeonBarProps {
   isDragging?: boolean;
   isWinner?: boolean;
   winnerConfig: WinnerConfig;
-  // Plan mode interactions
-  isPlanMode?: boolean;
-  onElementMouseDown?: (e: React.MouseEvent, type: 'text' | 'image') => void;
 }
 
 export const NeonBar: React.FC<NeonBarProps> = ({ 
@@ -21,16 +18,9 @@ export const NeonBar: React.FC<NeonBarProps> = ({
   color, 
   isDragging, 
   isWinner,
-  winnerConfig,
-  isPlanMode,
-  onElementMouseDown
+  winnerConfig
 }) => {
   const styles = COLORS[color];
-
-  // In Plan Mode, we only show winner elements on the RED bar to configure them.
-  // In Play Mode, we show them if isWinner is true.
-  const showWinnerElements = isWinner || (isPlanMode && color === 'red');
-  const isInteractive = isPlanMode && color === 'red';
 
   return (
     <div className={`relative w-full h-full flex flex-col justify-end group cursor-pointer select-none ${isWinner ? 'z-40' : ''}`}>
@@ -47,23 +37,19 @@ export const NeonBar: React.FC<NeonBarProps> = ({
           style={{ 
             bottom: `${relativeHeightPercent}%`, // Stick to top of bar
             height: 0, // Zero height container to not affect layout
-            display: showWinnerElements ? 'flex' : 'none',
+            display: isWinner ? 'flex' : 'none',
             justifyContent: 'center',
-            transition: isPlanMode ? 'none' : 'bottom 0.7s cubic-bezier(0.34,1.56,0.64,1)' // Match bar animation
+            transition: 'bottom 0.7s cubic-bezier(0.34,1.56,0.64,1)' // Match bar animation
           }}
         >
              <div 
-               className={`absolute bottom-0 flex items-center justify-center ${isInteractive ? 'cursor-move pointer-events-auto hover:outline hover:outline-2 hover:outline-white' : ''}`}
+               className={`absolute bottom-0 flex items-center justify-center`}
                style={{
                  // The Y transform is inverted logic here because we are anchoring from bottom. 
-                 // Positive Y moves UP away from bar, Negative Y moves INTO bar.
                  transform: `translate(${winnerConfig.imageTransform.x}px, ${-winnerConfig.imageTransform.y}px) rotate(${winnerConfig.imageTransform.rotate}deg) scale(${winnerConfig.imageTransform.scale})`,
                }}
-               onMouseDown={(e) => {
-                 if(isInteractive && onElementMouseDown) onElementMouseDown(e, 'image');
-               }}
              >
-               <div className={!isInteractive && isWinner ? 'animate-bounce-slow' : ''}>
+               <div className={isWinner ? 'animate-bounce-slow' : ''}>
                  {winnerConfig.imageSrc ? (
                     <img 
                       src={winnerConfig.imageSrc} 
