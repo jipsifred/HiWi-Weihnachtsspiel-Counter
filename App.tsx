@@ -348,15 +348,15 @@ const App: React.FC = () => {
 
       {/* --- THE STAGE --- */}
       {/* 
-         Changed: Enhanced sizing logic.
-         'w-auto h-auto max-w-full max-h-full aspect-video' ensures it scales up until it hits a border, 
-         maintaining 16:9 perfectly without overflow or crop.
+         FIXED: Logic to ensure 16:9 ratio fits in viewport.
+         max-w-[177.78vh] means width cannot exceed (100vh * 16/9), preventing vertical overflow.
+         w-full ensures it stretches horizontally until it hits that limit.
       */}
       <div 
-        className={`relative shadow-2xl overflow-hidden bg-black rounded-lg select-none transition-all duration-700 ease-in-out border border-white/10 aspect-video
+        className={`relative shadow-2xl overflow-hidden bg-black rounded-lg select-none transition-all duration-700 ease-in-out border border-white/10 aspect-video mx-auto
           ${viewMode === 'setup' 
             ? 'w-[80%] max-w-6xl mt-[30vh] opacity-90' // Setup: smaller, pushed down
-            : 'w-auto h-auto max-w-full max-h-full aspect-video' // Presentation: Scale to fit viewport perfectly
+            : 'w-full max-w-[177.78vh]' // Presentation: Fills width, but caps width based on height to maintain 16:9 inside 100vh
           }
         `}
         style={{
