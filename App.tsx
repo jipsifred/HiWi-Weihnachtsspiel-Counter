@@ -5,26 +5,42 @@ import { BarPosition, BarDimensions, ScoreState, WinnerConfig } from './types';
 import { NeonBar } from './components/NeonBar';
 import { Confetti } from './components/Confetti';
 
+// Helper for safe storage access (prevents crashes in private mode/iframes)
+const getSafeStorage = (key: string, defaultValue: any) => {
+  try {
+    if (typeof window === 'undefined') return defaultValue;
+    const item = localStorage.getItem(key);
+    return item !== null ? item : defaultValue;
+  } catch (e) {
+    console.warn(`Error reading ${key} from localStorage`, e);
+    return defaultValue;
+  }
+};
+
+const setSafeStorage = (key: string, value: string) => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch (e) {
+    console.warn(`Error writing ${key} to localStorage`, e);
+  }
+};
+
 const App: React.FC = () => {
   // --- STATE INITIALIZATION WITH PERSISTENCE ---
 
   // viewMode: Persist setup vs presentation mode
   const [viewMode, setViewMode] = useState<'setup' | 'presentation'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('neon_scoreboard_viewMode');
-      if (saved === 'presentation' || saved === 'setup') return saved;
-    }
-    return 'setup';
+    const saved = getSafeStorage('neon_scoreboard_viewMode', 'setup');
+    return (saved === 'presentation' || saved === 'setup') ? saved : 'setup';
   });
   
   // bgImage: Persist background. Handle 'NONE' for gradient mode.
   const [bgImage, setBgImage] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('neon_scoreboard_bgImage');
-      if (saved === 'NONE') return null; // User explicitly wanted no image
-      if (saved) return saved;
-    }
-    return DEFAULT_BG_IMAGE;
+    const saved = getSafeStorage('neon_scoreboard_bgImage', DEFAULT_BG_IMAGE);
+    if (saved === 'NONE') return null;
+    return saved;
   });
 
   // positions & dimensions are constants
@@ -34,14 +50,12 @@ const App: React.FC = () => {
 
   // scores: Persist the score object
   const [scores, setScores] = useState<ScoreState>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('neon_scoreboard_scores');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Failed to parse saved scores", e);
-        }
+    const saved = getSafeStorage('neon_scoreboard_scores', null);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved scores", e);
       }
     }
     return { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -49,14 +63,9 @@ const App: React.FC = () => {
 
   // maxScore: Persist max score setting
   const [maxScore, setMaxScore] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('neon_scoreboard_maxScore');
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed)) return parsed;
-      }
-    }
-    return 20;
+    const saved = getSafeStorage('neon_scoreboard_maxScore', '20');
+    const parsed = parseInt(saved, 10);
+    return !isNaN(parsed) ? parsed : 20;
   });
 
   const [showWinnerAnimation, setShowWinnerAnimation] = useState<boolean>(false);
@@ -64,23 +73,19 @@ const App: React.FC = () => {
   // --- PERSISTENCE EFFECTS ---
 
   useEffect(() => {
-    localStorage.setItem('neon_scoreboard_viewMode', viewMode);
+    setSafeStorage('neon_scoreboard_viewMode', viewMode);
   }, [viewMode]);
 
   useEffect(() => {
-    if (bgImage === null) {
-      localStorage.setItem('neon_scoreboard_bgImage', 'NONE');
-    } else {
-      localStorage.setItem('neon_scoreboard_bgImage', bgImage);
-    }
+    setSafeStorage('neon_scoreboard_bgImage', bgImage === null ? 'NONE' : bgImage);
   }, [bgImage]);
 
   useEffect(() => {
-    localStorage.setItem('neon_scoreboard_scores', JSON.stringify(scores));
+    setSafeStorage('neon_scoreboard_scores', JSON.stringify(scores));
   }, [scores]);
 
   useEffect(() => {
-    localStorage.setItem('neon_scoreboard_maxScore', maxScore.toString());
+    setSafeStorage('neon_scoreboard_maxScore', maxScore.toString());
   }, [maxScore]);
 
 
